@@ -1,22 +1,19 @@
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Features from './components/Features';
-import WhyChoose from './components/WhyChoose';
-import CTA from './components/CTA';
-import Footer from './components/Footer';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 
 function App() {
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-primary/20 selection:text-primary-dark">
-            <Navbar />
-            <main>
-                <Hero />
-                <Features />
-                <WhyChoose />
-                <CTA />
-            </main>
-            <Footer />
-        </div>
+        <BrowserRouter>
+            <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-primary/20 selection:text-primary-dark">
+                <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                </Routes>
+            </div>
+        </BrowserRouter>
     )
 }
 
