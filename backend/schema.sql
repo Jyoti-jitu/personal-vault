@@ -6,7 +6,23 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT,
   phone_number TEXT,
   dob DATE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  profile_picture TEXT,
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+);
+
+-- Create cards table
+CREATE TABLE IF NOT EXISTS cards (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  card_holder_name TEXT NOT NULL,
+  card_number TEXT NOT NULL,
+  expiry_date TEXT NOT NULL,
+  cvv TEXT NOT NULL,
+  card_type TEXT NOT NULL,
+  bank_name TEXT,
+  card_color TEXT,
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
 );
 
 -- Disable RLS for now (as used in development)

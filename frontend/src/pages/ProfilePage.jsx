@@ -7,8 +7,10 @@ export default function ProfilePage() {
         username: '',
         email: '',
         phone_number: '',
-        dob: ''
+        dob: '',
+        profile_picture: ''
     });
+    const [initialFormData, setInitialFormData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -46,7 +48,15 @@ export default function ProfilePage() {
                 username: data.username || '',
                 email: data.email || '',
                 phone_number: data.phone_number || '',
-                dob: data.dob ? data.dob.split('T')[0] : ''
+                dob: data.dob ? data.dob.split('T')[0] : '',
+                profile_picture: data.profile_picture || ''
+            });
+            setInitialFormData({
+                username: data.username || '',
+                email: data.email || '',
+                phone_number: data.phone_number || '',
+                dob: data.dob ? data.dob.split('T')[0] : '',
+                profile_picture: data.profile_picture || ''
             });
         } catch (err) {
             setError(err.message);
@@ -57,6 +67,17 @@ export default function ProfilePage() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({ ...formData, profile_picture: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -75,7 +96,8 @@ export default function ProfilePage() {
                 body: JSON.stringify({
                     username: formData.username,
                     phone_number: formData.phone_number,
-                    dob: formData.dob
+                    dob: formData.dob,
+                    profile_picture: formData.profile_picture
                 }),
             });
 
@@ -84,6 +106,7 @@ export default function ProfilePage() {
             }
 
             setSuccess('Profile updated successfully!');
+            setInitialFormData(formData); // Update initial state to match new saved state
         } catch (err) {
             setError(err.message);
         }
@@ -108,12 +131,24 @@ export default function ProfilePage() {
 
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     <div className="p-8 border-b border-gray-100 flex items-center gap-6">
-                        <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                            <UserCircleIcon className="h-12 w-12 text-primary" />
+                        <div className="relative group">
+                            <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                                {formData.profile_picture ? (
+                                    <img src={formData.profile_picture} alt="Profile" className="h-full w-full object-cover" />
+                                ) : (
+                                    <UserCircleIcon className="h-20 w-20 text-primary" />
+                                )}
+                            </div>
+                            <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-50 transition-colors border border-gray-100">
+                                <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-600">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                </svg>
+                            </label>
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">{formData.email}</h2>
-                            <p className="text-gray-500 text-sm">Personal Vault User</p>
+                            <h2 className="text-2xl font-bold text-gray-900">{formData.username || 'User'}</h2>
+                            <p className="text-gray-500">{formData.email}</p>
                         </div>
                     </div>
 
@@ -175,14 +210,20 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end pt-6 border-t border-gray-100">
-                                <Link to="/dashboard" className="px-6 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors mr-4">
-                                    Cancel
-                                </Link>
-                                <button className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                                    Save Changes
-                                </button>
-                            </div>
+                            {JSON.stringify(formData) !== JSON.stringify(initialFormData) && (
+                                <div className="flex justify-end pt-6 border-t border-gray-100 animate-fade-in-up">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(initialFormData)}
+                                        className="px-6 py-3 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors mr-4"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            )}
                         </form>
                     </div>
                 </div>

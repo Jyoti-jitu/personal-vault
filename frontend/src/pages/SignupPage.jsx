@@ -5,12 +5,12 @@ import { ShieldCheckIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon } from '@heroic
 export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
-        fullName: '',
+
         email: '',
         password: '',
         username: '',
         phone_number: '',
-        dob: ''
+
     });
     const [error, setError] = useState('');
     const navigate = useNavigate();
@@ -66,21 +66,10 @@ export default function SignupPage() {
                     )}
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                            <input
-                                type="text"
-                                name="fullName"
-                                value={formData.fullName}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                placeholder="John Doe"
-                                required
-                            />
-                        </div>
+
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                             <input
                                 type="text"
                                 name="username"
@@ -105,28 +94,16 @@ export default function SignupPage() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                <input
-                                    type="tel"
-                                    name="phone_number"
-                                    value={formData.phone_number}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                    placeholder="+1234567890"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                                <input
-                                    type="date"
-                                    name="dob"
-                                    value={formData.dob}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                />
-                            </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input
+                                type="tel"
+                                name="phone_number"
+                                value={formData.phone_number}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                placeholder="+1234567890"
+                            />
                         </div>
 
                         <div>
