@@ -5,11 +5,33 @@ import jwt from 'jsonwebtoken';
 import supabase from './db.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
 const app = express();
 const PORT = 5000;
+
+// Multer Setup
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir);
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage });
 
 // Environment Variables
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -32,6 +54,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Request logger
 app.use((req, res, next) => {
@@ -347,6 +370,105 @@ app.delete('/cards/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Delete card error:', error);
         res.status(500).json({ error: 'Failed to delete card' });
+    }
+});
+
+// --- Personal Documents Routes ---
+
+// Add New Document
+app.post('/documents', authenticateToken, upload.single('file'), async (req, res) => {
+    const { title } = req.body;
+    const filePath = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!title || !filePath) {
+        return res.status(400).json({ error: 'Title and File are required' });
+    }
+
+    try {
+        const { data: doc, error } = await supabase
+            .from('documents')
+            .insert([{
+                user_id: req.user.userId,
+                title: title,
+                file_path: filePath
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.status(201).json({ message: 'Document added successfully', document: doc });
+    } catch (error) {
+        console.error('Add document error:', error);
+        res.status(500).json({ error: 'Failed to add document' });
+    }
+});
+
+// Get User Documents
+app.get('/documents', authenticateToken, async (req, res) => {
+    try {
+        const { data: docs, error } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('user_id', req.user.userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        res.json(docs);
+    } catch (error) {
+        console.error('Fetch documents error:', error);
+        res.status(500).json({ error: 'Failed to fetch documents' });
+    }
+});
+
+// Update Document
+app.put('/documents/:id', authenticateToken, upload.single('file'), async (req, res) => {
+    const { title } = req.body;
+    const documentId = req.params.id;
+
+    try {
+        // Prepare update object
+        const updateData = {};
+        if (title) updateData.title = title;
+        if (req.file) updateData.file_path = `/uploads/${req.file.filename}`;
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No data to update' });
+        }
+
+        const { data: doc, error } = await supabase
+            .from('documents')
+            .update(updateData)
+            .eq('id', documentId)
+            .eq('user_id', req.user.userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json({ message: 'Document updated successfully', document: doc });
+    } catch (error) {
+        console.error('Update document error:', error);
+        res.status(500).json({ error: 'Failed to update document' });
+    }
+});
+
+// Delete Document
+app.delete('/documents/:id', authenticateToken, async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('documents')
+            .delete()
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.userId);
+
+        if (error) throw error;
+
+        res.json({ message: 'Document deleted successfully' });
+    } catch (error) {
+        console.error('Delete document error:', error);
+        res.status(500).json({ error: 'Failed to delete document' });
     }
 });
 

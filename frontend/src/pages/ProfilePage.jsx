@@ -14,6 +14,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
     const navigate = useNavigate();
 
     useEffect(() => {

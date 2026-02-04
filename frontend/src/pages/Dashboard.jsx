@@ -120,7 +120,7 @@ export default function Dashboard() {
                             key={item.name}
                             onClick={() => {
                                 if (item.name === 'Payment Cards') navigate('/cards');
-                                if (item.name === 'Personal Information') navigate('/profile');
+                                if (item.name === 'Personal Information') navigate('/personal-info');
                                 // Add other links as they are implemented
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${item.active
@@ -214,7 +214,7 @@ export default function Dashboard() {
                                 <div
                                     key={index}
                                     onClick={() => {
-                                        if (card.title === "Personal Information") navigate('/profile');
+                                        if (card.title === "Personal Information") navigate('/personal-info');
                                         if (card.title === "Payment Cards") navigate('/cards');
                                     }}
                                     className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col cursor-pointer`}

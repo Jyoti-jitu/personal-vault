@@ -8,6 +8,16 @@ CREATE TABLE IF NOT EXISTS users (
   dob DATE,
   profile_picture TEXT,
   created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+
+);
+
+
+-- Create documents table
+CREATE TABLE IF NOT EXISTS documents (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  title TEXT NOT NULL,
+  file_path TEXT NOT NULL,
   created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
 );
 
