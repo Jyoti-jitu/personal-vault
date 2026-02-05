@@ -373,45 +373,292 @@ app.delete('/cards/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// --- Personal Documents Routes ---
 
-// Add New Document
-app.post('/documents', authenticateToken, upload.single('file'), async (req, res) => {
-    const { title } = req.body;
-    const filePath = req.file ? `/uploads/${req.file.filename}` : null;
+// --- Important Images & Albums Routes ---
 
-    if (!title || !filePath) {
-        return res.status(400).json({ error: 'Title and File are required' });
+// -- Albums --
+
+// Get Albums
+app.get('/albums', authenticateToken, async (req, res) => {
+    try {
+        const { data: albums, error } = await supabase
+            .from('albums')
+            .select('*')
+            .eq('user_id', req.user.userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(albums);
+    } catch (error) {
+        console.error('Fetch albums error:', error);
+        res.status(500).json({ error: 'Failed to fetch albums' });
     }
+});
+
+// Create Album
+app.post('/albums', authenticateToken, async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Album name is required' });
 
     try {
-        const { data: doc, error } = await supabase
-            .from('documents')
-            .insert([{
-                user_id: req.user.userId,
-                title: title,
-                file_path: filePath
-            }])
+        const { data: album, error } = await supabase
+            .from('albums')
+            .insert([{ user_id: req.user.userId, name }])
             .select()
             .single();
 
         if (error) throw error;
-
-        res.status(201).json({ message: 'Document added successfully', document: doc });
+        res.status(201).json({ message: 'Album created', album });
     } catch (error) {
-        console.error('Add document error:', error);
-        res.status(500).json({ error: 'Failed to add document' });
+        console.error('Create album error:', error);
+        res.status(500).json({ error: 'Failed to create album' });
     }
 });
 
-// Get User Documents
+// Delete Album
+app.delete('/albums/:id', authenticateToken, async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('albums')
+            .delete()
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.userId);
+
+        if (error) throw error;
+        res.json({ message: 'Album deleted' });
+    } catch (error) {
+        console.error('Delete album error:', error);
+        res.status(500).json({ error: 'Failed to delete album' });
+    }
+});
+
+// -- Images --
+
+// Add New Image
+app.post('/images', authenticateToken, upload.array('files', 50), async (req, res) => {
+    const { title, album_id } = req.body;
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    // Validation: Root uploads (no album) must be single file and have a title
+    if (!album_id) {
+        if (req.files.length > 1) {
+            return res.status(400).json({ error: 'You can only upload one image at a time outside an album' });
+        }
+        if (!title) {
+            return res.status(400).json({ error: 'Image title is required for uploads outside an album' });
+        }
+    }
+
+    try {
+        const insertionPromises = req.files.map(file => {
+            const filePath = `/uploads/${file.filename}`;
+            const imageTitle = title || file.originalname;
+
+            return supabase
+                .from('images')
+                .insert([{
+                    user_id: req.user.userId,
+                    title: imageTitle,
+                    file_path: filePath,
+                    album_id: album_id ? parseInt(album_id) : null
+                }])
+                .select()
+                .single();
+        });
+
+        const results = await Promise.all(insertionPromises);
+
+        // Check for errors in results if needed, but Promise.all will reject if any fail.
+        // However, supabase.insert might not throw but return { error }.
+        // Let's check the results.
+        const images = [];
+        for (const result of results) {
+            if (result.error) throw result.error;
+            images.push(result.data);
+        }
+
+        res.status(201).json({ message: 'Images added successfully', images: images });
+    } catch (error) {
+        console.error('Add images error:', error);
+        res.status(500).json({ error: 'Failed to add images' });
+    }
+});
+
+// Get User Images (Optional Filter by Album)
+app.get('/images', authenticateToken, async (req, res) => {
+    try {
+        const { album_id } = req.query;
+        let query = supabase
+            .from('images')
+            .select('*')
+            .eq('user_id', req.user.userId)
+            .order('created_at', { ascending: false });
+
+        if (album_id) {
+            query = query.eq('album_id', album_id);
+        } else {
+            // Keep behavior: if no query defaults to all, or filtering for root logic can be handled in frontend by filtering response or dedicated param.
+            // For now return all if no filter.
+        }
+
+        const { data: imgs, error } = await query;
+
+        if (error) throw error;
+
+        res.json(imgs);
+    } catch (error) {
+        console.error('Fetch images error:', error);
+        res.status(500).json({ error: 'Failed to fetch images' });
+    }
+});
+
+// Delete Image
+app.delete('/images/:id', authenticateToken, async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('images')
+            .delete()
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.userId);
+
+        if (error) throw error;
+
+        res.json({ message: 'Image deleted successfully' });
+    } catch (error) {
+        console.error('Delete image error:', error);
+        res.status(500).json({ error: 'Failed to delete image' });
+    }
+});
+
+// --- Personal Documents Routes ---
+
+// -- Folders --
+
+// Get Document Folders
+app.get('/document-folders', authenticateToken, async (req, res) => {
+    try {
+        const { data: folders, error } = await supabase
+            .from('document_folders')
+            .select('*')
+            .eq('user_id', req.user.userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(folders);
+    } catch (error) {
+        console.error('Fetch doc folders error:', error);
+        res.status(500).json({ error: 'Failed to fetch folders' });
+    }
+});
+
+// Create Document Folder
+app.post('/document-folders', authenticateToken, async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Folder name is required' });
+
+    try {
+        const { data: folder, error } = await supabase
+            .from('document_folders')
+            .insert([{ user_id: req.user.userId, name }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.status(201).json({ message: 'Folder created', folder });
+    } catch (error) {
+        console.error('Create doc folder error:', error);
+        res.status(500).json({ error: 'Failed to create folder' });
+    }
+});
+
+// Delete Document Folder
+app.delete('/document-folders/:id', authenticateToken, async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('document_folders')
+            .delete()
+            .eq('id', req.params.id)
+            .eq('user_id', req.user.userId);
+
+        if (error) throw error;
+        res.json({ message: 'Folder deleted' });
+    } catch (error) {
+        console.error('Delete doc folder error:', error);
+        res.status(500).json({ error: 'Failed to delete folder' });
+    }
+});
+
+
+// -- Documents --
+
+// Add New Document (Multiple supported in folders, single in root)
+app.post('/documents', authenticateToken, upload.array('files', 50), async (req, res) => {
+    const { title, folder_id } = req.body;
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    // Validation: Root uploads (no folder) must be single file and have a title
+    if (!folder_id) {
+        if (req.files.length > 1) {
+            return res.status(400).json({ error: 'You can only upload one document at a time outside a folder' });
+        }
+        if (!title) {
+            return res.status(400).json({ error: 'Document title is required for uploads outside a folder' });
+        }
+    }
+
+    try {
+        const insertionPromises = req.files.map(file => {
+            const filePath = `/uploads/${file.filename}`;
+            const docTitle = title || file.originalname;
+
+            return supabase
+                .from('documents')
+                .insert([{
+                    user_id: req.user.userId,
+                    title: docTitle,
+                    file_path: filePath,
+                    folder_id: folder_id ? parseInt(folder_id) : null
+                }])
+                .select()
+                .single();
+        });
+
+        const results = await Promise.all(insertionPromises);
+
+        const documents = [];
+        for (const result of results) {
+            if (result.error) throw result.error;
+            documents.push(result.data);
+        }
+
+        res.status(201).json({ message: 'Documents added successfully', documents });
+    } catch (error) {
+        console.error('Add document error:', error);
+        res.status(500).json({ error: 'Failed to add documents' });
+    }
+});
+
+// Get User Documents (Filtered by Folder)
 app.get('/documents', authenticateToken, async (req, res) => {
     try {
-        const { data: docs, error } = await supabase
+        const { folder_id } = req.query;
+        let query = supabase
             .from('documents')
             .select('*')
             .eq('user_id', req.user.userId)
             .order('created_at', { ascending: false });
+
+        if (folder_id) {
+            query = query.eq('folder_id', folder_id);
+        }
+
+        const { data: docs, error } = await query;
 
         if (error) throw error;
 

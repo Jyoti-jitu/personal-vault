@@ -7,6 +7,9 @@ import ProfilePage from './pages/ProfilePage';
 import PaymentCardsPage from './pages/PaymentCardsPage';
 import PersonalInformationPage from './pages/PersonalInformationPage';
 
+import ImportantImagesPage from './pages/ImportantImagesPage';
+import DocumentsPage from './pages/DocumentsPage';
+
 function App() {
     return (
         <BrowserRouter>
@@ -18,7 +21,9 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/personal-info" element={<PersonalInformationPage />} />
+                    <Route path="/important-images" element={<ImportantImagesPage />} />
                     <Route path="/cards" element={<PaymentCardsPage />} />
+                    <Route path="/documents" element={<DocumentsPage />} />
                 </Routes>
             </div>
         </BrowserRouter>

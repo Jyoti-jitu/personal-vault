@@ -12,10 +12,38 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 
+-- Create document folders table
+CREATE TABLE IF NOT EXISTS document_folders (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  name TEXT NOT NULL,
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+);
+
 -- Create documents table
 CREATE TABLE IF NOT EXISTS documents (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id),
+  folder_id INTEGER REFERENCES document_folders(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+);
+
+
+-- Create albums table
+CREATE TABLE IF NOT EXISTS albums (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  name TEXT NOT NULL,
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+);
+
+-- Create images table (updated with album_id)
+CREATE TABLE IF NOT EXISTS images (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  album_id INTEGER REFERENCES albums(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   file_path TEXT NOT NULL,
   created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)

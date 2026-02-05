@@ -121,7 +121,8 @@ export default function Dashboard() {
                             onClick={() => {
                                 if (item.name === 'Payment Cards') navigate('/cards');
                                 if (item.name === 'Personal Information') navigate('/personal-info');
-                                // Add other links as they are implemented
+                                if (item.name === 'ImportantImages') navigate('/important-images');
+                                if (item.name === 'Documents') navigate('/documents');
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${item.active
                                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
@@ -216,6 +217,8 @@ export default function Dashboard() {
                                     onClick={() => {
                                         if (card.title === "Personal Information") navigate('/personal-info');
                                         if (card.title === "Payment Cards") navigate('/cards');
+                                        if (card.title === "Important Images") navigate('/important-images');
+                                        if (card.title === "Documents") navigate('/documents');
                                     }}
                                     className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col cursor-pointer`}
                                 >

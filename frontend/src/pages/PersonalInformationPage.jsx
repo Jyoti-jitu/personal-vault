@@ -63,7 +63,8 @@ export default function PersonalInformationPage() {
             const formDataToSend = new FormData();
             formDataToSend.append('title', newDoc.title);
             if (newDoc.file) {
-                formDataToSend.append('file', newDoc.file);
+                const fieldName = editingDoc ? 'file' : 'files';
+                formDataToSend.append(fieldName, newDoc.file);
             }
 
             const url = editingDoc
