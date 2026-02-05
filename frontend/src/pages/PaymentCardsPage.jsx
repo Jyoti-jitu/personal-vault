@@ -82,13 +82,35 @@ export default function PaymentCardsPage() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         let newValue = value;
+        let newCardType = formData.cardType;
 
         if (name === 'cardNumber') {
             // Remove non-digit characters and spaces (clean input for processing)
             const rawValue = value.replace(/\D/g, '');
-            const truncatedValue = rawValue.slice(0, 16);
+            const truncatedValue = rawValue.slice(0, 19);
             // Re-format with spaces
             newValue = truncatedValue.replace(/(\d{4})(?=\d)/g, '$1 ');
+
+            // Auto-detect Card Type
+            if (rawValue.startsWith('4')) {
+                newCardType = 'Visa';
+            } else if (/^3[47]/.test(rawValue)) {
+                newCardType = 'Amex';
+            } else if (/^(60|65|81|82)/.test(rawValue) || rawValue.startsWith('508')) {
+                newCardType = 'RuPay';
+            } else {
+                // Mastercard Logic
+                // Range: 51-55
+                const firstTwo = parseInt(rawValue.slice(0, 2));
+                // Range: 2221-2720
+                const firstFour = parseInt(rawValue.slice(0, 4));
+
+                if (rawValue.length >= 2 && firstTwo >= 51 && firstTwo <= 55) {
+                    newCardType = 'Mastercard';
+                } else if (rawValue.length >= 4 && firstFour >= 2221 && firstFour <= 2720) {
+                    newCardType = 'Mastercard';
+                }
+            }
         } else if (name === 'expiryDate') {
             // Remove non-digit characters
             const cleanValue = value.replace(/\D/g, '');
@@ -109,9 +131,15 @@ export default function PaymentCardsPage() {
             } else {
                 newValue = truncatedValue;
             }
+        } else if (name === 'cardType') {
+            newCardType = value;
         }
 
-        setFormData({ ...formData, [name]: newValue });
+        setFormData(prev => ({
+            ...prev,
+            [name]: newValue,
+            cardType: name === 'cardNumber' ? newCardType : (name === 'cardType' ? value : prev.cardType)
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -354,6 +382,15 @@ export default function PaymentCardsPage() {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
                                         <input type="text" name="bankName" value={formData.bankName} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" required placeholder="e.g. HDFC, Chase" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Card Type</label>
+                                        <select name="cardType" value={formData.cardType} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                            <option value="Visa">Visa</option>
+                                            <option value="Mastercard">Mastercard</option>
+                                            <option value="RuPay">RuPay</option>
+                                            <option value="Amex">Amex</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Card Color</label>

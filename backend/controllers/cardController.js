@@ -11,7 +11,7 @@ export const addCard = async (req, res) => {
     try {
         const encryptedCardNumber = encrypt(cardNumber);
         const encryptedCvv = encrypt(cvv);
-
+ 
         const { data: card, error } = await supabase
             .from('cards')
             .insert([{
@@ -20,7 +20,7 @@ export const addCard = async (req, res) => {
                 card_number: encryptedCardNumber,
                 expiry_date: expiryDate,
                 cvv: encryptedCvv,
-                card_type: cardType,
+                card_type: cardType, 
                 bank_name: bankName || null,
                 card_color: cardColor || 'from-gray-900 to-gray-800'
             }])
