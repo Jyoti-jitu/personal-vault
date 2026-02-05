@@ -42,6 +42,18 @@ async function runMigration() {
         `);
         console.log('Updated documents table schema.');
 
+        // 3. Create personal_information table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS personal_information (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                title TEXT NOT NULL,
+                file_path TEXT,
+                created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+            );
+        `);
+        console.log('Created personal_information table.');
+
         await client.query('COMMIT');
         console.log('Migration completed successfully.');
     } catch (e) {

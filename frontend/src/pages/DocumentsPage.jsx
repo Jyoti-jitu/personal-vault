@@ -7,8 +7,11 @@ import {
     FolderPlusIcon,
     XMarkIcon,
     TrashIcon,
-    EyeIcon
+    EyeIcon,
+    ArrowDownTrayIcon,
+    PencilIcon
 } from '@heroicons/react/24/outline';
+import FilePreviewModal from '../components/FilePreviewModal';
 
 export default function DocumentsPage() {
     const [documents, setDocuments] = useState([]);
@@ -25,6 +28,9 @@ export default function DocumentsPage() {
     const [newFolderName, setNewFolderName] = useState('');
     const [uploadFiles, setUploadFiles] = useState([]);
     const [documentTitle, setDocumentTitle] = useState('');
+    const [selectedDocs, setSelectedDocs] = useState(new Set());
+    const [editingDoc, setEditingDoc] = useState(null);
+    const [previewDoc, setPreviewDoc] = useState(null);
 
     const navigate = useNavigate();
 
@@ -41,8 +47,8 @@ export default function DocumentsPage() {
             }
 
             const [docsRes, foldersRes] = await Promise.all([
-                fetch('http://localhost:5000/documents', { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch('http://localhost:5000/document-folders', { headers: { 'Authorization': `Bearer ${token}` } })
+                fetch(`${import.meta.env.VITE_API_BASE_URL}/documents`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${import.meta.env.VITE_API_BASE_URL}/document-folders`, { headers: { 'Authorization': `Bearer ${token}` } })
             ]);
 
             if (docsRes.ok && foldersRes.ok) {
@@ -69,7 +75,7 @@ export default function DocumentsPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/document-folders', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/document-folders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +99,7 @@ export default function DocumentsPage() {
         if (!window.confirm('Delete this folder and all documents inside?')) return;
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:5000/document-folders/${id}`, {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/document-folders/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -104,17 +110,101 @@ export default function DocumentsPage() {
         }
     };
 
+    const handleDownload = async (doc) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/documents/${doc.id}/download`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = doc.title; // Browser might auto-detect extension or we set it if needed
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Failed to download document');
+        }
+    };
+
+    const toggleDocSelection = (id) => {
+        const newSelected = new Set(selectedDocs);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedDocs(newSelected);
+    };
+
+    const handleSelectAll = () => {
+        const visibleDocs = documents.filter(doc => selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id);
+        if (selectedDocs.size === visibleDocs.length && visibleDocs.length > 0) {
+            setSelectedDocs(new Set());
+        } else {
+            const newSelected = new Set();
+            visibleDocs.forEach(doc => newSelected.add(doc.id));
+            setSelectedDocs(newSelected);
+        }
+    };
+
+    const handleBatchDelete = async () => {
+        if (selectedDocs.size === 0) return;
+        if (!window.confirm(`Delete ${selectedDocs.size} documents?`)) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/documents/delete-batch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ ids: Array.from(selectedDocs) })
+            });
+
+            if (!response.ok) throw new Error('Batch delete failed');
+
+            setDocuments(documents.filter(doc => !selectedDocs.has(doc.id)));
+            setSelectedDocs(new Set());
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleEditClick = (doc) => {
+        setEditingDoc(doc);
+        setDocumentTitle(doc.title);
+        setUploadFiles([]); // Reset files, user might not want to change file
+        setShowUploadModal(true);
+    };
+
+    const openUploadModal = () => {
+        setEditingDoc(null);
+        setDocumentTitle('');
+        setUploadFiles([]);
+        setShowUploadModal(true);
+    };
+
     const handleUpload = async (e) => {
         e.preventDefault();
-        if (uploadFiles.length === 0) return;
 
-        // Validation for root level uploads (Outside Folder)
-        if (!selectedFolder) {
-            if (uploadFiles.length > 1) {
-                return alert('You can only upload one document at a time outside a folder');
-            }
-            if (!documentTitle.trim()) {
-                return alert('Document title is required');
+        // If editing, title is required. File is optional.
+        if (editingDoc) {
+            if (!documentTitle.trim()) return alert('Document title is required');
+        } else {
+            // Creating new
+            if (uploadFiles.length === 0) return;
+            if (!selectedFolder) {
+                if (uploadFiles.length > 1 && !editingDoc) return alert('You can only upload one document at a time outside a folder');
+                if (!documentTitle.trim()) return alert('Document title is required');
             }
         }
 
@@ -122,32 +212,65 @@ export default function DocumentsPage() {
 
         if (selectedFolder) {
             formData.append('folder_id', selectedFolder.id);
-        } else {
+        }
+
+        // For editing, we might send title even if folder is selected, to update title
+        if (!selectedFolder || editingDoc) {
             formData.append('title', documentTitle);
         }
 
         Array.from(uploadFiles).forEach(file => {
-            formData.append('files', file);
+            formData.append('file', file); // Backend expects 'file' for single upload/update
         });
+
+        // Backend expects 'files' array for bulk upload in POST /documents
+        // But PUT /documents/:id expects single 'file'
+        // And POST /documents also supports array 'files'
+
+        if (!editingDoc) {
+            // Re-append for bulk upload if new
+            // Clear previous append to avoid duplication if handled differently?
+            // Actually, let's stick to current logic: POST uses 'files'
+            formData.delete('file');
+            Array.from(uploadFiles).forEach(file => {
+                formData.append('files', file);
+            });
+        }
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/documents', {
-                method: 'POST',
+
+            let url = `${import.meta.env.VITE_API_BASE_URL}/documents`;
+            let method = 'POST';
+
+            if (editingDoc) {
+                url = `${import.meta.env.VITE_API_BASE_URL}/documents/${editingDoc.id}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to upload documents');
+                throw new Error(errorData.error || 'Failed to save document');
             }
 
             const data = await response.json();
-            setDocuments([...data.documents, ...documents]);
+
+            if (editingDoc) {
+                setDocuments(documents.map(d => d.id === editingDoc.id ? data.document : d));
+            } else {
+                setDocuments([...data.documents, ...documents]);
+            }
+
             setShowUploadModal(false);
             setUploadFiles([]);
             setDocumentTitle('');
+            setEditingDoc(null);
         } catch (err) {
             alert(err.message);
         }
@@ -157,7 +280,7 @@ export default function DocumentsPage() {
         if (!window.confirm('Delete this document?')) return;
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:5000/documents/${id}`, {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/documents/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -209,11 +332,25 @@ export default function DocumentsPage() {
                             </button>
                         )}
                         <button
-                            onClick={() => setShowUploadModal(true)}
+                            onClick={handleSelectAll}
+                            className="px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm"
+                        >
+                            {selectedDocs.size > 0 && selectedDocs.size === documents.filter(doc => selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id).length ? 'Deselect All' : 'Select All'}
+                        </button>
+                        <button
+                            onClick={openUploadModal}
                             className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2"
                         >
                             <DocumentTextIcon className="h-5 w-5" /> Upload Document
                         </button>
+                        {selectedDocs.size > 0 && (
+                            <button
+                                onClick={handleBatchDelete}
+                                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 transition-all flex items-center gap-2 animate-fade-in"
+                            >
+                                <TrashIcon className="h-5 w-5" /> Delete ({selectedDocs.size})
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -246,16 +383,33 @@ export default function DocumentsPage() {
                         {/* 2. Show Documents (Filtered by Folder or Root) */}
                         {documents.filter(doc => selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id).map(doc => (
                             <div key={doc.id} className="group relative bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all aspect-square flex flex-col">
-                                <div className="flex-1 flex items-center justify-center bg-gray-100">
+                                <div className="flex-1 flex items-center justify-center bg-gray-100 relative">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedDocs.has(doc.id)}
+                                        onChange={(e) => { e.stopPropagation(); toggleDocSelection(doc.id); }}
+                                        className="absolute top-3 left-3 w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer z-10"
+                                    />
                                     <DocumentTextIcon className="h-16 w-16 text-gray-400" />
                                 </div>
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
-                                    <div className="flex justify-end gap-2">
-                                        <a href={`http://localhost:5000${doc.file_path}`} target="_blank" rel="noreferrer" className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-orange-600 transition-colors shadow-sm">
-                                            <EyeIcon className="h-4 w-4" />
-                                        </a>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3 pointer-events-none">
+                                    <div className="flex justify-end gap-2 pointer-events-auto">
                                         <button onClick={() => handleDeleteDocument(doc.id)} className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-red-600 transition-colors shadow-sm">
                                             <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setPreviewDoc(doc)}
+                                            className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-orange-600 transition-colors shadow-sm"
+                                        >
+                                            <EyeIcon className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                    <div className="flex justify-end gap-2 pointer-events-auto">
+                                        <button onClick={() => handleDownload(doc)} className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors shadow-sm">
+                                            <ArrowDownTrayIcon className="h-4 w-4" />
+                                        </button>
+                                        <button onClick={() => handleEditClick(doc)} className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-green-600 transition-colors shadow-sm">
+                                            <PencilIcon className="h-4 w-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -279,7 +433,7 @@ export default function DocumentsPage() {
                             <div className="col-span-full py-20 text-center text-gray-400">
                                 <DocumentTextIcon className="h-20 w-20 mx-auto mb-4 opacity-10" />
                                 <p className="text-xl font-medium">This folder is empty</p>
-                                <button onClick={() => setShowUploadModal(true)} className="mt-2 text-orange-600 hover:underline font-bold">
+                                <button onClick={openUploadModal} className="mt-2 text-orange-600 hover:underline font-bold">
                                     Upload a document here
                                 </button>
                             </div>
@@ -325,14 +479,14 @@ export default function DocumentsPage() {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <h3 className="text-xl font-bold text-gray-900">
-                                {selectedFolder ? `Add to ${selectedFolder.name}` : 'Upload Document'}
+                                {editingDoc ? 'Edit Document' : (selectedFolder ? `Add to ${selectedFolder.name}` : 'Upload Document')}
                             </h3>
                             <button onClick={() => setShowUploadModal(false)} className="text-gray-400 hover:text-gray-600">
                                 <XMarkIcon className="h-6 w-6" />
                             </button>
                         </div>
                         <form onSubmit={handleUpload} className="p-6 space-y-4">
-                            {!selectedFolder && (
+                            {(!selectedFolder || editingDoc) && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Document Title</label>
                                     <input
@@ -347,22 +501,39 @@ export default function DocumentsPage() {
                             )}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {selectedFolder ? 'Select Files (Multiple allowed)' : 'Select File (Single)'}
+                                    {editingDoc ? 'Replace File (Optional)' : (selectedFolder ? 'Select Files (Multiple allowed)' : 'Select File (Single)')}
                                 </label>
                                 <input
                                     type="file"
-                                    multiple={!!selectedFolder}
+                                    multiple={!!selectedFolder && !editingDoc}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                                    onChange={e => setUploadFiles(e.target.files)}
-                                    required
+                                    onChange={e => {
+                                        const files = e.target.files;
+                                        setUploadFiles(files);
+                                        if (files.length > 0 && !selectedFolder && !editingDoc) {
+                                            const name = files[0].name;
+                                            const nameWithoutExt = name.substring(0, name.lastIndexOf('.')) || name;
+                                            setDocumentTitle(nameWithoutExt);
+                                        }
+                                    }}
+                                    required={!editingDoc}
                                 />
                             </div>
                             <button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-500/20 transition-all">
-                                {selectedFolder ? 'Upload Documents' : 'Upload Document'}
+                                {editingDoc ? 'Update Document' : 'Upload Document'}
                             </button>
                         </form>
                     </div>
                 </div>
+            )}
+            {/* File Preview Modal */}
+            {previewDoc && (
+                <FilePreviewModal
+                    isOpen={!!previewDoc}
+                    onClose={() => setPreviewDoc(null)}
+                    fileUrl={previewDoc.file_path.startsWith('http') ? previewDoc.file_path : `${import.meta.env.VITE_API_BASE_URL}${previewDoc.file_path}`}
+                    title={previewDoc.title}
+                />
             )}
         </div>
     );

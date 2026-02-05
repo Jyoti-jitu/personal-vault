@@ -7,8 +7,10 @@ import {
     FolderPlusIcon,
     XMarkIcon,
     TrashIcon,
+
     EyeIcon
 } from '@heroicons/react/24/outline';
+import FilePreviewModal from '../components/FilePreviewModal';
 
 export default function ImportantImagesPage() {
     const [images, setImages] = useState([]);
@@ -16,6 +18,7 @@ export default function ImportantImagesPage() {
     const [selectedAlbum, setSelectedAlbum] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [previewImage, setPreviewImage] = useState(null);
 
     // Modals
     const [showAlbumModal, setShowAlbumModal] = useState(false);
@@ -41,8 +44,8 @@ export default function ImportantImagesPage() {
             }
 
             const [imgsRes, albumsRes] = await Promise.all([
-                fetch('http://localhost:5000/images', { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch('http://localhost:5000/albums', { headers: { 'Authorization': `Bearer ${token}` } })
+                fetch(`${import.meta.env.VITE_API_BASE_URL}/images`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${import.meta.env.VITE_API_BASE_URL}/albums`, { headers: { 'Authorization': `Bearer ${token}` } })
             ]);
 
             if (imgsRes.ok && albumsRes.ok) {
@@ -69,7 +72,7 @@ export default function ImportantImagesPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/albums', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/albums`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +96,7 @@ export default function ImportantImagesPage() {
         if (!window.confirm('Delete this album and all images inside?')) return;
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:5000/albums/${id}`, {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/albums/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -132,7 +135,7 @@ export default function ImportantImagesPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/images', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/images`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -157,7 +160,7 @@ export default function ImportantImagesPage() {
         if (!window.confirm('Delete this image?')) return;
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:5000/images/${id}`, {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/images/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -246,12 +249,15 @@ export default function ImportantImagesPage() {
                         {/* 2. Show Images (Filtered by Album or Root) */}
                         {images.filter(img => selectedAlbum ? img.album_id === selectedAlbum.id : !img.album_id).map(img => (
                             <div key={img.id} className="group relative bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all aspect-square">
-                                <img src={`http://localhost:5000${img.file_path}`} alt={img.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                <img src={img.file_path.startsWith('http') ? img.file_path : `${import.meta.env.VITE_API_BASE_URL}${img.file_path}`} alt={img.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
                                     <div className="flex justify-end gap-2">
-                                        <a href={`http://localhost:5000${img.file_path}`} target="_blank" rel="noreferrer" className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-purple-600 transition-colors shadow-sm">
+                                        <button
+                                            onClick={() => setPreviewImage(img)}
+                                            className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-purple-600 transition-colors shadow-sm"
+                                        >
                                             <EyeIcon className="h-4 w-4" />
-                                        </a>
+                                        </button>
                                         <button onClick={() => handleDeleteImage(img.id)} className="p-2 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-red-600 transition-colors shadow-sm">
                                             <TrashIcon className="h-4 w-4" />
                                         </button>
@@ -359,6 +365,15 @@ export default function ImportantImagesPage() {
                         </form>
                     </div>
                 </div>
+            )}
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <FilePreviewModal
+                    isOpen={!!previewImage}
+                    onClose={() => setPreviewImage(null)}
+                    fileUrl={previewImage.file_path.startsWith('http') ? previewImage.file_path : `${import.meta.env.VITE_API_BASE_URL}${previewImage.file_path}`}
+                    title={previewImage.title}
+                />
             )}
         </div>
     );

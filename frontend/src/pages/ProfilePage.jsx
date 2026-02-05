@@ -29,7 +29,7 @@ export default function ProfilePage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:5000/me', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/me', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

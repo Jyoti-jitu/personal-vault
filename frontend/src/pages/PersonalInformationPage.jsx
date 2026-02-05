@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, DocumentPlusIcon, TrashIcon, ArrowDownTrayIcon, XMarkIcon, EyeIcon, PencilIcon } from '@heroicons/react/24/outline';
+import FilePreviewModal from '../components/FilePreviewModal';
 
 export default function PersonalInformationPage() {
     const [documents, setDocuments] = useState([]);
@@ -8,6 +9,7 @@ export default function PersonalInformationPage() {
     const [showDocModal, setShowDocModal] = useState(false);
     const [newDoc, setNewDoc] = useState({ title: '', file: null });
     const [editingDoc, setEditingDoc] = useState(null);
+    const [previewDoc, setPreviewDoc] = useState(null);
     const [error, setError] = useState('');
     const [docError, setDocError] = useState('');
 
@@ -25,7 +27,7 @@ export default function PersonalInformationPage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:5000/documents', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/personal-information`, {
                 headers: { 'Authorization': `Bearer ${token} ` }
             });
 
@@ -63,13 +65,12 @@ export default function PersonalInformationPage() {
             const formDataToSend = new FormData();
             formDataToSend.append('title', newDoc.title);
             if (newDoc.file) {
-                const fieldName = editingDoc ? 'file' : 'files';
-                formDataToSend.append(fieldName, newDoc.file);
+                formDataToSend.append('file', newDoc.file);
             }
 
             const url = editingDoc
-                ? `http://localhost:5000/documents/${editingDoc.id}`
-                : 'http://localhost:5000/documents';
+                ? `${import.meta.env.VITE_API_BASE_URL}/personal-information/${editingDoc.id}`
+                : `${import.meta.env.VITE_API_BASE_URL}/personal-information`;
 
             const method = editingDoc ? 'PUT' : 'POST';
 
@@ -115,13 +116,37 @@ export default function PersonalInformationPage() {
         if (!window.confirm('Delete this information?')) return;
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:5000/documents/${id}`, {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL}/personal-information/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setDocuments(documents.filter(d => d.id !== id));
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleDownload = async (doc) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/personal-information/${doc.id}/download`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = doc.title;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Failed to download file');
         }
     };
 
@@ -182,15 +207,24 @@ export default function PersonalInformationPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <a
-                                            href={`http://localhost:5000${doc.file_path}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="p-2 text-gray-500 hover:text-primary hover:bg-white rounded-lg transition-all"
-                                            title="View Document"
-                                        >
-                                            <EyeIcon className="h-5 w-5" />
-                                        </a>
+                                        {doc.file_path && (
+                                            <>
+                                                <button
+                                                    onClick={() => setPreviewDoc(doc)}
+                                                    className="p-2 text-gray-500 hover:text-primary hover:bg-white rounded-lg transition-all"
+                                                    title="View Document"
+                                                >
+                                                    <EyeIcon className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDownload(doc)}
+                                                    className="p-2 text-gray-500 hover:text-blue-500 hover:bg-white rounded-lg transition-all"
+                                                    title="Download"
+                                                >
+                                                    <ArrowDownTrayIcon className="h-5 w-5" />
+                                                </button>
+                                            </>
+                                        )}
                                         <button
                                             onClick={() => handleEditClick(doc)}
                                             className="p-2 text-gray-500 hover:text-blue-500 hover:bg-white rounded-lg transition-all"
@@ -241,7 +275,14 @@ export default function PersonalInformationPage() {
                                     <input
                                         type="file"
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                        onChange={e => setNewDoc({ ...newDoc, file: e.target.files[0] })}
+                                        onChange={e => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const name = file.name;
+                                                const title = name.substring(0, name.lastIndexOf('.')) || name;
+                                                setNewDoc({ ...newDoc, file: file, title: title });
+                                            }
+                                        }}
                                         required={!editingDoc}
                                     />
                                 </div>
@@ -253,6 +294,16 @@ export default function PersonalInformationPage() {
                             </form>
                         </div>
                     </div>
+                )}
+
+                {/* File Preview Modal */}
+                {previewDoc && (
+                    <FilePreviewModal
+                        isOpen={!!previewDoc}
+                        onClose={() => setPreviewDoc(null)}
+                        fileUrl={previewDoc.file_path.startsWith('http') ? previewDoc.file_path : `${import.meta.env.VITE_API_BASE_URL}${previewDoc.file_path}`}
+                        title={previewDoc.title}
+                    />
                 )}
             </div>
         </div>

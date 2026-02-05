@@ -70,6 +70,16 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 
 -- DROP TABLE IF EXISTS public.users;
 
+
+-- Create personal_information table
+CREATE TABLE IF NOT EXISTS personal_information (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  title TEXT NOT NULL,
+  file_path TEXT,
+  created_at TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0)
+);
+
 -- SELECT table_name
 -- FROM information_schema.tables
 -- WHERE table_schema = 'public'

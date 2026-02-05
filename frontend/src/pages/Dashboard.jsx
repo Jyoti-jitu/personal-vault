@@ -27,7 +27,7 @@ export default function Dashboard() {
             }
 
             try {
-                const response = await fetch('http://localhost:5000/me', {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

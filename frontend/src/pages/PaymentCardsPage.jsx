@@ -34,7 +34,7 @@ export default function PaymentCardsPage() {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch('http://localhost:5000/me', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -57,7 +57,7 @@ export default function PaymentCardsPage() {
                 return;
             }
 
-            const response = await fetch('http://localhost:5000/cards', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/cards`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -129,8 +129,8 @@ export default function PaymentCardsPage() {
             };
 
             const url = isEditing && selectedCard
-                ? `http://localhost:5000/cards/${selectedCard.id}`
-                : 'http://localhost:5000/cards';
+                ? `${import.meta.env.VITE_API_BASE_URL}/cards/${selectedCard.id}`
+                : `${import.meta.env.VITE_API_BASE_URL}/cards`;
 
             const method = isEditing ? 'PUT' : 'POST';
 
@@ -211,7 +211,7 @@ export default function PaymentCardsPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5000/cards/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/cards/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
