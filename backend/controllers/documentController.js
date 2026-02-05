@@ -44,8 +44,7 @@ export const addDocuments = async (req, res) => {
 
         res.status(201).json({ message: 'Documents added successfully', documents });
     } catch (error) {
-        console.error('Add document error:', error);
-        res.status(500).json({ error: 'Failed to add documents' });
+        res.status(500).json({ error: 'We encountered an issue adding your documents. Please try again.' });
     }
 };
 
@@ -77,8 +76,7 @@ export const getDocuments = async (req, res) => {
 
         res.json(docsWithUrls);
     } catch (error) {
-        console.error('Fetch documents error:', error);
-        res.status(500).json({ error: 'Failed to fetch documents' });
+        res.status(500).json({ error: 'We couldn\'t load your documents right now.' });
     }
 };
 
@@ -114,8 +112,7 @@ export const batchDeleteDocuments = async (req, res) => {
 
         res.json({ message: 'Documents deleted successfully' });
     } catch (error) {
-        console.error('Batch delete documents error:', error);
-        res.status(500).json({ error: 'Failed to delete documents' });
+        res.status(500).json({ error: 'We couldn\'t delete the selected documents.' });
     }
 };
 
@@ -136,8 +133,7 @@ export const downloadDocument = async (req, res) => {
         // Redirect to the signed URL
         res.redirect(url);
     } catch (error) {
-        console.error('Download document error:', error);
-        res.status(500).json({ error: 'Failed to download document' });
+        res.status(500).json({ error: 'We couldn\'t download your document.' });
     }
 };
 
@@ -189,8 +185,7 @@ export const updateDocument = async (req, res) => {
             document: { ...doc, file_path: getPublicUrl(doc.file_path) }
         });
     } catch (error) {
-        console.error('Update document error:', error);
-        res.status(500).json({ error: 'Failed to update document' });
+        res.status(500).json({ error: 'We couldn\'t update your document.' });
     }
 };
 
@@ -220,7 +215,6 @@ export const deleteDocument = async (req, res) => {
 
         res.json({ message: 'Document deleted successfully' });
     } catch (error) {
-        console.error('Delete document error:', error);
-        res.status(500).json({ error: 'Failed to delete document' });
+        res.status(500).json({ error: 'We couldn\'t delete your document.' });
     }
 };

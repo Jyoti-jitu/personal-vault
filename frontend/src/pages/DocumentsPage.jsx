@@ -60,7 +60,7 @@ export default function DocumentsPage() {
                 localStorage.removeItem('token');
                 navigate('/login');
             } else {
-                throw new Error('Failed to fetch data');
+                throw new Error('We couldn\'t load your data. Please try again.');
             }
         } catch (err) {
             setError(err.message);
@@ -84,7 +84,7 @@ export default function DocumentsPage() {
                 body: JSON.stringify({ name: newFolderName })
             });
 
-            if (!response.ok) throw new Error('Failed to create folder');
+            if (!response.ok) throw new Error('We couldn\'t create your folder.');
 
             const data = await response.json();
             setFolders([data.folder, ...folders]);
@@ -117,7 +117,7 @@ export default function DocumentsPage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (!response.ok) throw new Error('Download failed');
+            if (!response.ok) throw new Error('We couldn\'t start the download.');
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -130,7 +130,7 @@ export default function DocumentsPage() {
             document.body.removeChild(a);
         } catch (error) {
             console.error('Download error:', error);
-            alert('Failed to download document');
+            alert('We couldn\'t download your document.');
         }
     };
 
@@ -157,7 +157,7 @@ export default function DocumentsPage() {
 
     const handleBatchDelete = async () => {
         if (selectedDocs.size === 0) return;
-        if (!window.confirm(`Delete ${selectedDocs.size} documents?`)) return;
+        if (!window.confirm(`Are you sure you want to delete these ${selectedDocs.size} documents?`)) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -256,7 +256,7 @@ export default function DocumentsPage() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save document');
+                throw new Error(errorData.error || 'We couldn\'t save your document.');
             }
 
             const data = await response.json();
@@ -277,7 +277,7 @@ export default function DocumentsPage() {
     };
 
     const handleDeleteDocument = async (id) => {
-        if (!window.confirm('Delete this document?')) return;
+        if (!window.confirm('Are you sure you want to delete this document?')) return;
         try {
             const token = localStorage.getItem('token');
             await fetch(`${import.meta.env.VITE_API_BASE_URL}/documents/${id}`, {

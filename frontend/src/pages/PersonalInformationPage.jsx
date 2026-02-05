@@ -38,7 +38,7 @@ export default function PersonalInformationPage() {
                 localStorage.removeItem('token');
                 navigate('/login');
             } else {
-                throw new Error('Failed to fetch information');
+                throw new Error('We couldn\'t load your personal information.');
             }
         } catch (err) {
             setError(err.message);
@@ -52,11 +52,11 @@ export default function PersonalInformationPage() {
         setDocError('');
 
         if (!newDoc.title) {
-            setDocError('Title is required.');
+            setDocError('Please enter a title.');
             return;
         }
         if (!editingDoc && !newDoc.file) {
-            setDocError('File is required for new documents.');
+            setDocError('Please select a file to upload.');
             return;
         }
 
@@ -82,7 +82,7 @@ export default function PersonalInformationPage() {
                 body: formDataToSend
             });
 
-            if (!response.ok) throw new Error(editingDoc ? 'Failed to update document' : 'Failed to upload document');
+            if (!response.ok) throw new Error(editingDoc ? 'We couldn\'t update your document.' : 'We couldn\'t upload your document.');
 
             const data = await response.json();
 
@@ -113,7 +113,7 @@ export default function PersonalInformationPage() {
     };
 
     const handleDeleteDoc = async (id) => {
-        if (!window.confirm('Delete this information?')) return;
+        if (!window.confirm('Are you sure you want to delete this?')) return;
         try {
             const token = localStorage.getItem('token');
             await fetch(`${import.meta.env.VITE_API_BASE_URL}/personal-information/${id}`, {
