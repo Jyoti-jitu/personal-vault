@@ -149,15 +149,21 @@ export default function Dashboard() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-                    <div className="md:hidden flex items-center gap-2 text-gray-800">
+                <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8">
+                    <div className="flex items-center gap-2 md:hidden">
+                        <button
+                            onClick={() => setShowProfileMenu(!showProfileMenu)} // Reusing profile menu state for now, but should ideally be separate. Let's create a new state for sidebar.
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                        >
+                            <Squares2X2Icon className="h-6 w-6" />
+                        </button>
                         <ShieldCheckIcon className="h-8 w-8 text-blue-600" />
-                        <span className="font-bold">PV</span>
+                        <span className="font-bold text-gray-800">Personal Vault</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <ShieldCheckIcon className="h-6 w-6 text-blue-600 hidden md:block" />
-                        <span className="font-bold text-gray-800 hidden md:block">Personal Vault</span>
+                    <div className="flex items-center gap-2 hidden md:flex">
+                        <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
+                        <span className="font-bold text-gray-800">Personal Vault</span>
                     </div>
 
                     <div className="relative">
@@ -176,12 +182,30 @@ export default function Dashboard() {
                                     <UserCircleIcon className="h-6 w-6" />
                                 )}
                             </div>
-                            <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                            <ChevronDownIcon className="h-4 w-4 text-gray-400 hidden sm:block" />
                         </button>
 
                         {/* Dropdown */}
                         {showProfileMenu && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10 animate-fade-in-down">
+                                <div className="md:hidden border-b border-gray-100 mb-1">
+                                    {menuItems.map((item) => (
+                                        <button
+                                            key={item.name}
+                                            onClick={() => {
+                                                if (item.name === 'Payment Cards') navigate('/cards');
+                                                if (item.name === 'Personal Information') navigate('/personal-info');
+                                                if (item.name === 'ImportantImages') navigate('/important-images');
+                                                if (item.name === 'Documents') navigate('/documents');
+                                                setShowProfileMenu(false);
+                                            }}
+                                            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                        >
+                                            <item.icon className="h-4 w-4 mr-3 text-gray-400" />
+                                            {item.name}
+                                        </button>
+                                    ))}
+                                </div>
                                 <button
                                     onClick={() => navigate('/profile')}
                                     className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"

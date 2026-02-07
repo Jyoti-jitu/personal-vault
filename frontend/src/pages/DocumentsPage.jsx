@@ -9,7 +9,8 @@ import {
     TrashIcon,
     EyeIcon,
     ArrowDownTrayIcon,
-    PencilIcon
+    PencilIcon,
+    MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import FilePreviewModal from '../components/FilePreviewModal';
 
@@ -31,6 +32,7 @@ export default function DocumentsPage() {
     const [selectedDocs, setSelectedDocs] = useState(new Set());
     const [editingDoc, setEditingDoc] = useState(null);
     const [previewDoc, setPreviewDoc] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const navigate = useNavigate();
 
@@ -296,6 +298,20 @@ export default function DocumentsPage() {
         </div>
     );
 
+    // Filter documents and folders based on search query
+    const filteredDocuments = documents.filter(doc => {
+        const matchesFolder = selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id;
+        if (!searchQuery.trim()) return matchesFolder;
+        const query = searchQuery.toLowerCase();
+        return matchesFolder && doc.title?.toLowerCase().includes(query);
+    });
+
+    const filteredFolders = folders.filter(folder => {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        return folder.name?.toLowerCase().includes(query);
+    });
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-6xl mx-auto space-y-8">
@@ -354,6 +370,30 @@ export default function DocumentsPage() {
                     </div>
                 </div>
 
+                {/* Search Bar */}
+                {(folders.length > 0 || documents.length > 0) && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                        <div className="relative">
+                            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder={selectedFolder ? "Search documents by title..." : "Search folders or documents..."}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none transition-all bg-gray-50 text-sm md:text-base"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <XMarkIcon className="h-5 w-5" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Main Content Area */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 min-h-[500px]">
 
@@ -361,7 +401,7 @@ export default function DocumentsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
 
                         {/* 1. Show Folders (Only in Root View) */}
-                        {!selectedFolder && folders.map(folder => (
+                        {!selectedFolder && filteredFolders.map(folder => (
                             <div key={`folder-${folder.id}`} className="group relative">
                                 <button
                                     onClick={() => setSelectedFolder(folder)}
@@ -381,7 +421,7 @@ export default function DocumentsPage() {
                         ))}
 
                         {/* 2. Show Documents (Filtered by Folder or Root) */}
-                        {documents.filter(doc => selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id).map(doc => (
+                        {filteredDocuments.map(doc => (
                             <div key={doc.id} className="group relative bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all aspect-square flex flex-col">
                                 <div className="flex-1 flex items-center justify-center bg-gray-100 relative">
                                     <input

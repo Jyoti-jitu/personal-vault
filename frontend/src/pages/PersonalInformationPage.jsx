@@ -1,9 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, DocumentPlusIcon, TrashIcon, ArrowDownTrayIcon, XMarkIcon, EyeIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, DocumentPlusIcon, TrashIcon, ArrowDownTrayIcon, XMarkIcon, EyeIcon, PencilIcon, PhotoIcon, DocumentTextIcon, MusicalNoteIcon, FilmIcon, DocumentIcon } from '@heroicons/react/24/outline';
 import FilePreviewModal from '../components/FilePreviewModal';
 
 export default function PersonalInformationPage() {
+    const getFileIcon = (filename) => {
+        const ext = filename?.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+            return { icon: <PhotoIcon className="h-6 w-6" />, color: 'text-purple-500' };
+        } else if (['pdf'].includes(ext)) {
+            return { icon: <DocumentTextIcon className="h-6 w-6" />, color: 'text-red-500' };
+        } else if (['doc', 'docx', 'txt'].includes(ext)) {
+            return { icon: <DocumentTextIcon className="h-6 w-6" />, color: 'text-blue-500' };
+        } else if (['mp3', 'wav'].includes(ext)) {
+            return { icon: <MusicalNoteIcon className="h-6 w-6" />, color: 'text-pink-500' };
+        } else if (['mp4', 'mov', 'avi'].includes(ext)) {
+            return { icon: <FilmIcon className="h-6 w-6" />, color: 'text-orange-500' };
+        }
+        return { icon: <DocumentIcon className="h-6 w-6" />, color: 'text-gray-500' };
+    };
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showDocModal, setShowDocModal] = useState(false);
@@ -157,28 +172,38 @@ export default function PersonalInformationPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4">
                     <div>
-                        <div className="flex items-center gap-4 mb-1">
-                            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-white transition-colors">
-                                <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+                        <div className="flex items-center gap-3 md:gap-4 mb-1">
+                            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-white transition-colors flex-shrink-0">
+                                <ArrowLeftIcon className="h-5 w-5 md:h-6 md:w-6 text-gray-600" />
                             </Link>
-                            <h1 className="text-3xl font-heading font-bold text-gray-900">Personal Information</h1>
+                            <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 break-words line-clamp-1">Personal Information</h1>
                         </div>
-                        <p className="text-gray-500 ml-14">Manage your personal files and additional details</p>
+                        <p className="text-gray-500 ml-11 md:ml-14 text-sm md:text-base">Manage your personal files and additional details</p>
                     </div>
+                    {/* Desktop Add Button */}
                     <button
                         onClick={openAddModal}
-                        className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                        className="hidden md:flex bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all items-center justify-center gap-2"
                     >
                         <DocumentPlusIcon className="h-5 w-5" />
                         Add Info
                     </button>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                {/* Floating Action Button for Add Info (Mobile Only) */}
+                <button
+                    onClick={openAddModal}
+                    className="md:hidden fixed bottom-6 right-6 bg-primary hover:bg-primary-dark text-white p-4 rounded-full shadow-lg shadow-blue-500/30 transition-all hover:scale-110 z-30 flex items-center justify-center group"
+                    title="Add Information"
+                >
+                    <DocumentPlusIcon className="h-7 w-7" />
+                </button>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8">
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
                             {error}
@@ -196,17 +221,17 @@ export default function PersonalInformationPage() {
                     ) : (
                         <div className="grid gap-4">
                             {documents.map(doc => (
-                                <div key={doc.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all bg-gray-50/50 group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-white rounded-lg shadow-sm text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                                            <DocumentPlusIcon className="h-6 w-6" />
+                                <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all bg-gray-50/50 group gap-4">
+                                    <div className="flex items-center gap-4 min-w-0">
+                                        <div className={`p-3 bg-white rounded-lg shadow-sm group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0 ${getFileIcon(doc.title).color}`}>
+                                            {getFileIcon(doc.title).icon}
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-800 text-lg">{doc.title}</h3>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-bold text-gray-800 text-lg truncate">{doc.title}</h3>
                                             <p className="text-xs text-gray-500">{new Date(doc.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 justify-end">
                                         {doc.file_path && (
                                             <>
                                                 <button
