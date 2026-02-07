@@ -316,59 +316,67 @@ export default function DocumentsPage() {
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-6xl mx-auto space-y-8">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link to="/dashboard" className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <Link to="/dashboard" className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600 flex-shrink-0">
                             <ArrowLeftIcon className="h-6 w-6" />
                         </Link>
-                        <div>
-                            <h1 className="text-3xl font-heading font-bold text-gray-900 flex items-center gap-2">
-                                <DocumentTextIcon className="h-8 w-8 text-orange-600" />
-                                {selectedFolder ? selectedFolder.name : 'Documents'}
+                        <div className="min-w-0">
+                            <h1 className="text-xl md:text-3xl font-heading font-bold text-gray-900 flex items-center gap-2 truncate">
+                                <DocumentTextIcon className="h-6 w-6 md:h-8 md:w-8 text-orange-600 flex-shrink-0" />
+                                <span className="truncate">{selectedFolder ? selectedFolder.name : 'Documents'}</span>
                             </h1>
-                            <p className="text-gray-500">
+                            <p className="text-sm md:text-base text-gray-500 truncate">
                                 {selectedFolder ? 'Manage documents in this folder' : 'Organize your documents'}
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-2 md:gap-3">
                         {selectedFolder ? (
                             <button
                                 onClick={() => setSelectedFolder(null)}
-                                className="px-4 py-2 text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl font-bold transition-all"
+                                className="px-3 md:px-4 py-2 text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl font-bold transition-all text-sm md:text-base"
                             >
-                                Back to Folders
+                                ← Back
                             </button>
                         ) : (
                             <button
                                 onClick={() => setShowFolderModal(true)}
-                                className="px-4 py-2 bg-white text-orange-600 border border-orange-100 hover:bg-orange-50 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm"
+                                className="px-3 md:px-4 py-2 bg-white text-orange-600 border border-orange-100 hover:bg-orange-50 rounded-xl font-bold transition-all flex items-center gap-1 md:gap-2 shadow-sm text-sm md:text-base"
                             >
-                                <FolderPlusIcon className="h-5 w-5" /> New Folder
+                                <FolderPlusIcon className="h-4 w-4 md:h-5 md:w-5" />
+                                <span className="hidden sm:inline">New Folder</span>
+                                <span className="sm:hidden">Folder</span>
                             </button>
                         )}
                         <button
                             onClick={handleSelectAll}
-                            className="px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm"
+                            className="px-3 md:px-4 py-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-xl font-bold transition-all flex items-center gap-1 shadow-sm text-sm md:text-base"
                         >
-                            {selectedDocs.size > 0 && selectedDocs.size === documents.filter(doc => selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id).length ? 'Deselect All' : 'Select All'}
+                            <span className="hidden sm:inline">{selectedDocs.size > 0 && selectedDocs.size === documents.filter(doc => selectedFolder ? doc.folder_id === selectedFolder.id : !doc.folder_id).length ? 'Deselect All' : 'Select All'}</span>
+                            <span className="sm:hidden">{selectedDocs.size > 0 ? 'Deselect' : 'Select'}</span>
                         </button>
                         <button
                             onClick={openUploadModal}
-                            className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2"
+                            className="px-3 md:px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-lg shadow-orange-500/20 transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base"
                         >
-                            <DocumentTextIcon className="h-5 w-5" /> Upload Document
+                            <DocumentTextIcon className="h-4 w-4 md:h-5 md:w-5" />
+                            <span className="hidden sm:inline">Upload Document</span>
+                            <span className="sm:hidden">Upload</span>
                         </button>
                         {selectedDocs.size > 0 && (
                             <button
                                 onClick={handleBatchDelete}
-                                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 transition-all flex items-center gap-2 animate-fade-in"
+                                className="px-3 md:px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 transition-all flex items-center gap-1 md:gap-2 animate-fade-in text-sm md:text-base"
                             >
-                                <TrashIcon className="h-5 w-5" /> Delete ({selectedDocs.size})
+                                <TrashIcon className="h-4 w-4 md:h-5 md:w-5" />
+                                <span className="hidden sm:inline">Delete ({selectedDocs.size})</span>
+                                <span className="sm:hidden">{selectedDocs.size}</span>
                             </button>
                         )}
                     </div>
                 </div>
+
 
                 {/* Search Bar */}
                 {(folders.length > 0 || documents.length > 0) && (

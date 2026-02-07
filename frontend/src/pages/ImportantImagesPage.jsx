@@ -196,63 +196,61 @@ export default function ImportantImagesPage() {
             <div className="p-4 md:p-8">
                 <div className="max-w-7xl mx-auto space-y-6">
                     {/* Modern Header Card */}
-                    <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-xl shadow-blue-100/60 border border-blue-100 p-6">
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-xl shadow-blue-100/60 border border-blue-100 p-4 md:p-6">
                         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4 w-full lg:w-auto">
-                                <Link to="/dashboard" className="p-3 hover:bg-blue-50 rounded-xl transition-all duration-300 text-blue-600 hover:scale-110">
-                                    <ArrowLeftIcon className="h-6 w-6" />
+                            <div className="flex items-center gap-2 md:gap-4 w-full">
+                                <Link to="/dashboard" className="p-2 md:p-3 hover:bg-blue-50 rounded-xl transition-all duration-300 text-blue-600 hover:scale-110 flex-shrink-0">
+                                    <ArrowLeftIcon className="h-5 w-5 md:h-6 md:w-6" />
                                 </Link>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-400/50">
-                                            <PhotoIcon className="h-7 w-7 text-white" />
+                                    <div className="flex items-center gap-2 md:gap-3">
+                                        <div className="p-2 md:p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl md:rounded-2xl shadow-lg shadow-blue-400/50 flex-shrink-0">
+                                            <PhotoIcon className="h-5 w-5 md:h-7 md:w-7 text-white" />
                                         </div>
                                         <div className="min-w-0">
-                                            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent truncate">
+                                            <h1 className="text-lg md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent truncate">
                                                 {selectedAlbum ? selectedAlbum.name : 'Image Gallery'}
                                             </h1>
-                                            <p className="text-sm text-gray-500 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
+                                            <p className="text-xs md:text-sm text-gray-500 flex items-center gap-2 truncate">
+                                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse flex-shrink-0"></span>
                                                 {selectedAlbum
-                                                    ? `${filteredImages.length} images in this album`
-                                                    : `${albums.length} albums · ${images.filter(i => !i.album_id).length} loose images`
+                                                    ? `${filteredImages.length} images`
+                                                    : `${albums.length} albums · ${images.filter(i => !i.album_id).length} loose`
                                                 }
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="flex gap-3 w-full lg:w-auto">
-                                {selectedAlbum ? (
-                                    <button
-                                        onClick={() => setSelectedAlbum(null)}
-                                        className="flex-1 lg:flex-none px-5 py-2.5 bg-white hover:bg-blue-50 border-2 border-blue-200 hover:border-blue-400 text-blue-700 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] shadow-sm"
-                                    >
-                                        ← All Albums
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => setShowAlbumModal(true)}
-                                        className="flex-1 lg:flex-none px-5 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 hover:from-blue-200 hover:to-cyan-200 border-2 border-blue-200 hover:border-blue-300 text-blue-700 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] shadow-sm"
-                                    >
-                                        <FolderPlusIcon className="h-5 w-5" />
-                                        <span className="hidden sm:inline">New Album</span>
-                                        <span className="sm:hidden">Album</span>
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => setShowImageModal(true)}
-                                    className="flex-1 lg:flex-none px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold shadow-xl shadow-blue-400/50 transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02]"
-                                >
-                                    <PlusIcon className="h-5 w-5" />
-                                    Upload
-                                </button>
-                            </div>
                         </div>
                     </div>
 
-                    {/* Search Bar */}
+                    {/* Action Buttons Row */}
+                    <div className="flex flex-row md:justify-end gap-2 md:gap-3 w-full">
+                        {selectedAlbum ? (
+                            <button
+                                onClick={() => setSelectedAlbum(null)}
+                                className="flex-1 md:flex-none px-4 md:px-5 py-2.5 bg-white hover:bg-blue-50 border-2 border-blue-200 hover:border-blue-400 text-blue-700 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] shadow-sm text-sm md:text-base flex items-center justify-center gap-2"
+                            >
+                                <span>← All Albums</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowAlbumModal(true)}
+                                className="flex-1 md:flex-none px-3 md:px-5 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 hover:from-blue-200 hover:to-cyan-200 border-2 border-blue-200 hover:border-blue-300 text-blue-700 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] shadow-sm text-sm md:text-base whitespace-nowrap"
+                            >
+                                <FolderPlusIcon className="h-5 w-5" />
+                                <span>New Album</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowImageModal(true)}
+                            className="flex-1 md:flex-none px-3 md:px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-semibold shadow-xl shadow-blue-400/50 transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] text-sm md:text-base whitespace-nowrap"
+                        >
+                            <PlusIcon className="h-5 w-5" />
+                            Upload Image
+                        </button>
+                    </div>                    {/* Search Bar */}
                     {(albums.length > 0 || images.length > 0) && (
                         <div className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-xl shadow-blue-100/60 border border-blue-100 p-4 md:p-5">
                             <div className="relative">
